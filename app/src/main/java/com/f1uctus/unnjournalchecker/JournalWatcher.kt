@@ -18,11 +18,9 @@ import java.time.*
 
 const val notificationChannelId = "Enrolling"
 private const val ongoingNotificationId = 151389
+private val defaultInterval = Duration.ofMinutes(5)
 
-fun setNextEnrollmentCheckAlarm(
-    ctx: Context,
-    delay: Duration = Duration.ZERO
-) {
+fun setEnrollmentCheckAlarm(ctx: Context, delay: Duration = Duration.ZERO) {
     val intent = Intent(ctx, EnrollmentCheckAlarmReceiver::class.java)
     val pendingIntent = PendingIntent.getBroadcast(
         ctx,
@@ -30,16 +28,25 @@ fun setNextEnrollmentCheckAlarm(
         intent,
         PendingIntent.FLAG_IMMUTABLE
     )
+
+    val triggerTime = Instant.now().plus(
+        if (delay == Duration.ZERO) Duration.ofSeconds(2) else delay
+    )
     ctx.alarmManager.set(
         AlarmManager.RTC_WAKEUP,
-        System.currentTimeMillis() + delay.toMillis(),
+        triggerTime.toEpochMilli(),
         pendingIntent
     )
+
+    Log.d("EnrollmentCheckAlarm", "Alarm set to $triggerTime")
     val nots = ctx.notificationManager.activeNotifications
     if (nots.isEmpty() || nots[0].notification.priority < PRIORITY_DEFAULT) {
         updateNotification(ctx) { n ->
             n.setContentTitle(
-                ctx.getString(R.string.nextCheckAt) + LocalTime.now().plus(delay).toHoursMinutes
+                ctx.getString(R.string.nextCheckAt) + LocalDateTime.ofInstant(
+                    triggerTime,
+                    ZoneId.systemDefault()
+                ).toHoursMinutes
             )
         }
     }
@@ -49,7 +56,7 @@ class BootCompleteReceiver : BroadcastReceiver() {
     override fun onReceive(ctx: Context, intent: Intent) {
         if (intent.action.equals(Intent.ACTION_BOOT_COMPLETED)) {
             Log.i("BootCompleteReceiver", "Intent.ACTION_BOOT_COMPLETED")
-            setNextEnrollmentCheckAlarm(ctx, Duration.ofSeconds(15)) // TODO test
+            setEnrollmentCheckAlarm(ctx, Duration.ofSeconds(15)) // TODO test
         }
     }
 }
@@ -71,7 +78,7 @@ class EnrollmentCheckAlarmReceiver : BroadcastReceiver() {
             }
             return
         }
-        setNextEnrollmentCheckAlarm(ctx, Duration.ofMinutes(5))
+        setEnrollmentCheckAlarm(ctx, defaultInterval)
         wl.release()
     }
 

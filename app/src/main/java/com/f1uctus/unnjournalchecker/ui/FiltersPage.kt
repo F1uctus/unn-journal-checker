@@ -72,7 +72,7 @@ fun FiltersPage(
                         scope.launch {
                             dataStore.addFilter(filter.value)
                             filterPopupVisible = false
-                            setNextEnrollmentCheckAlarm(context)
+                            setEnrollmentCheckAlarm(context)
                         }
                     }) {
                         Icon(Icons.Filled.Done, "")
@@ -148,7 +148,7 @@ fun FiltersPage(
                 }
                 filters.forEach {
                     FilterBox(it, onRefresh = {
-                        setNextEnrollmentCheckAlarm(context)
+                        setEnrollmentCheckAlarm(context)
                     }, onDelete = {
                         scope.launch {
                             dataStore.removeFilter(it)

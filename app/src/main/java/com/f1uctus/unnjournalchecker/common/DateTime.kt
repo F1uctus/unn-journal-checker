@@ -2,6 +2,7 @@ package com.f1uctus.unnjournalchecker.common
 
 import java.time.*
 import java.time.format.DateTimeFormatter
+import java.time.temporal.TemporalAccessor
 
 val LocalDate.startOfWeek: LocalDate
     get() {
@@ -11,9 +12,9 @@ val LocalDate.startOfWeek: LocalDate
     }
 
 val hoursMinutesFormat = DateTimeFormatter.ofPattern("HH:mm")!!
-val LocalTime.toHoursMinutes: String get() = format(hoursMinutesFormat)
+val LocalDateTime.toHoursMinutes: String get() = hoursMinutesFormat.format(this)
 
 val dayMonthYearFormat = DateTimeFormatter.ofPattern("dd.MM.yyyy")!!
 
 private val yearMonthDayFmt = DateTimeFormatter.ofPattern("yyyy-MM-dd")!!
-val LocalDate.yearMonthDay: String get() = format(yearMonthDayFmt)
+val TemporalAccessor.yearMonthDay: String get() = yearMonthDayFmt.format(this)
