@@ -5,6 +5,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
+@Serializable
 data class JournalMenu(
     val sections: Map<Int, String>,
     val lectors: Map<Int, String>,
@@ -21,6 +22,10 @@ data class JournalMenu(
 
     fun building(f: JournalFilter): String? =
         if (f.building == 0) null else buildings[f.building]
+
+    companion object {
+        val empty = JournalMenu(mapOf(0 to ""), mapOf(0 to ""), mapOf(0 to ""))
+    }
 }
 
 @Serializable
@@ -31,6 +36,10 @@ data class JournalFilter(
 ) {
     val isEmpty: Boolean
         get() = (section ?: 0) + (lector ?: 0) + (building ?: 0) == 0
+
+    companion object {
+        val empty = JournalFilter(0, 0, 0)
+    }
 }
 
 data class Section(

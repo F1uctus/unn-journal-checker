@@ -3,24 +3,26 @@ package com.f1uctus.unnjournalchecker
 import android.app.*
 import android.content.*
 import android.net.Uri
-import android.os.Build
 import android.os.PowerManager
 import android.util.Log
-import android.widget.Toast
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationCompat.BigTextStyle
+import androidx.core.app.NotificationCompat.PRIORITY_DEFAULT
 import com.f1uctus.unnjournalchecker.common.*
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import java.time.Duration
-import java.time.LocalDate
+import java.time.*
 
 const val notificationChannelId = "Enrolling"
 private const val ongoingNotificationId = 151389
 
-fun setNextEnrollmentCheckAlarm(ctx: Context, delay: Duration) {
+fun setNextEnrollmentCheckAlarm(
+    ctx: Context,
+    delay: Duration = Duration.ZERO
+) {
     val intent = Intent(ctx, EnrollmentCheckAlarmReceiver::class.java)
     val pendingIntent = PendingIntent.getBroadcast(
         ctx,
@@ -33,14 +35,21 @@ fun setNextEnrollmentCheckAlarm(ctx: Context, delay: Duration) {
         System.currentTimeMillis() + delay.toMillis(),
         pendingIntent
     )
-    Toast.makeText(ctx, "Проверка журнала через: $delay", Toast.LENGTH_SHORT).show()
+    val nots = ctx.notificationManager.activeNotifications
+    if (nots.isEmpty() || nots[0].notification.priority < PRIORITY_DEFAULT) {
+        updateNotification(ctx) { n ->
+            n.setContentTitle(
+                ctx.getString(R.string.nextCheckAt) + LocalTime.now().plus(delay).toHoursMinutes
+            )
+        }
+    }
 }
 
 class BootCompleteReceiver : BroadcastReceiver() {
     override fun onReceive(ctx: Context, intent: Intent) {
         if (intent.action.equals(Intent.ACTION_BOOT_COMPLETED)) {
             Log.i("BootCompleteReceiver", "Intent.ACTION_BOOT_COMPLETED")
-            setNextEnrollmentCheckAlarm(ctx, Duration.ofSeconds(5)) // TODO test
+            setNextEnrollmentCheckAlarm(ctx, Duration.ofSeconds(15)) // TODO test
         }
     }
 }
@@ -49,10 +58,17 @@ class EnrollmentCheckAlarmReceiver : BroadcastReceiver() {
     override fun onReceive(ctx: Context, intent: Intent) {
         Log.d("EnrollmentCheckAlarm", "Alarm just fired")
         val wl = ctx.powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "journal:ECA")
-        wl.acquire(10 * 60 * 1000L /* 10 minutes */)
+        wl.acquire(Duration.ofMinutes(1).toMillis())
+        updateNotification(ctx) { n ->
+            n.setContentTitle(ctx.getString(R.string.checkingTheJournal))
+        }
         try {
             notifyOfAvailableSection(ctx)
         } catch (e: Exception) {
+            updateNotification(ctx) { n ->
+                n.setContentTitle(ctx.getString(R.string.journalCheckFailed))
+                n.setStyle(BigTextStyle().bigText(e.toString()))
+            }
             return
         }
         setNextEnrollmentCheckAlarm(ctx, Duration.ofMinutes(5))
@@ -60,21 +76,17 @@ class EnrollmentCheckAlarmReceiver : BroadcastReceiver() {
     }
 
     private fun notifyOfAvailableSection(ctx: Context) {
-        val dataStore = ctx.dataStore
-        val credentials = runBlocking {
-            dataStore.credentials.first()
+        val cookie = runBlocking {
+            ctx.dataStore.cookie.first()
         } ?: throw Exception("No credentials")
         val filters = runBlocking {
-            dataStore.data
+            ctx.dataStore.data
                 .map { it[filtersPrefKey] }
                 .map { it?.map { Json.decodeFromString<JournalFilter>(it) } ?: setOf() }
                 .first()
         }
 
-        val cookie = scraper.authenticate(credentials.first, credentials.second)
-            ?: throw Exception("API authentication failed")
-
-        val menu = scraper.extractMenu(cookie)
+        val menu = JournalScraper.extractMenu(cookie)
 
         val avails = LinkedHashMap<String, Pair<JournalFilter, Section>>()
 
@@ -83,9 +95,9 @@ class EnrollmentCheckAlarmReceiver : BroadcastReceiver() {
         while (checkDate.monthValue <= lastMonth) {
             for (sel in filters) {
                 val secName = menu.section(sel) ?: "<N/A>"
-                val sections = scraper.extractSections(checkDate, sel, cookie)
+                val sections = JournalScraper.extractSections(checkDate, sel, cookie)
                 for (sec in sections) {
-                    if (!scraper.isAvailableForEnrollment(sec, cookie)) continue
+                    if (!JournalScraper.isAvailableForEnrollment(sec, cookie)) continue
 
                     avails["${sec.friendlyDate}: $secName (${menu.lectorSurname(sel)})"] =
                         Pair(sel, sec)
@@ -93,43 +105,55 @@ class EnrollmentCheckAlarmReceiver : BroadcastReceiver() {
                         val openJournalIntent = Intent(
                             Intent.ACTION_VIEW,
                             Uri.parse(
-                                scraper.buildFilterUrl(
+                                JournalScraper.buildFilterUrl(
                                     avails.values.first().second.date,
                                     avails.values.first().first
                                 )
                             ),
-                        )
-                        val intent = PendingIntent.getActivity(
                             ctx,
-                            0,
-                            openJournalIntent,
-                            PendingIntent.FLAG_IMMUTABLE
+                            MainActivity::class.java
                         )
-                        n.setContentTitle("Доступна запись")
-                            .setStyle(
-                                NotificationCompat.BigTextStyle()
-                                    .bigText(avails.keys.joinToString("\n"))
+                        val pendingIntent = TaskStackBuilder.create(ctx).run {
+                            addNextIntentWithParentStack(openJournalIntent)
+                            getPendingIntent(
+                                ongoingNotificationId,
+                                PendingIntent.FLAG_UPDATE_CURRENT.or(PendingIntent.FLAG_IMMUTABLE)
                             )
-                            .setContentIntent(intent)
+                        }
+                        n.priority = PRIORITY_DEFAULT
+                        n.setContentTitle(ctx.getString(R.string.enrollmentAvailable))
+                        n.setStyle(BigTextStyle().bigText(avails.keys.joinToString("\n")))
+                        n.setContentIntent(pendingIntent)
                     }
                 }
             }
             checkDate = checkDate.plusWeeks(1)
         }
-    }
 
-    private fun updateNotification(
-        ctx: Context,
-        builder: (NotificationCompat.Builder) -> NotificationCompat.Builder,
-    ) {
-        val nb = builder(
-            NotificationCompat.Builder(ctx, notificationChannelId)
-                .setSmallIcon(R.drawable.ic_running)
-                .setOngoing(true)
-        )
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
-            nb.priority = NotificationCompat.PRIORITY_DEFAULT
+        if (avails.isEmpty()) {
+            updateNotification(ctx) { n ->
+                n.setContentTitle(ctx.getString(R.string.noEnrollmentOptions))
+            }
         }
-        ctx.notificationManager.notify(ongoingNotificationId, nb.build())
     }
+}
+
+private fun updateNotification(
+    ctx: Context,
+    builder: (NotificationCompat.Builder) -> NotificationCompat.Builder,
+) {
+    val openAppIntent = PendingIntent.getActivity(
+        ctx,
+        0,
+        Intent(ctx, MainActivity::class.java),
+        PendingIntent.FLAG_IMMUTABLE
+    )
+    val nb = builder(
+        NotificationCompat.Builder(ctx, notificationChannelId)
+            .setSmallIcon(R.drawable.ic_running)
+            .setPriority(NotificationCompat.PRIORITY_MIN)
+            .setContentIntent(openAppIntent)
+            .setOngoing(true)
+    )
+    ctx.notificationManager.notify(ongoingNotificationId, nb.build())
 }

@@ -1,9 +1,10 @@
 package com.f1uctus.unnjournalchecker
 
-import org.junit.Test
-
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.BeforeClass
+import org.junit.Test
 import java.time.LocalDate
 
 /**
@@ -22,7 +23,7 @@ fun <K, V> Map<K, V>.getKey(value: V) =
 class JournalScraperUnitTest {
     @Test
     fun extractMenu_works() {
-        val menu = scraper.extractMenu(auth)
+        val menu = JournalScraper.extractMenu(auth)
         assertEquals(5, menu.sections.size)
         assertNotEquals(0, menu.lectors.size)
         assertNotEquals(0, menu.buildings.size)
@@ -30,8 +31,8 @@ class JournalScraperUnitTest {
 
     @Test
     fun extractSections_works() {
-        val menu = scraper.extractMenu(auth)
-        val sections = scraper.extractSections(
+        val menu = JournalScraper.extractMenu(auth)
+        val sections = JournalScraper.extractSections(
             LocalDate.of(2023, 4, 25),
             JournalFilter(
                 section = menu.sections.getKey("Секция БАДМИНТОН"),
@@ -45,8 +46,8 @@ class JournalScraperUnitTest {
 
     @Test
     fun isAvailableForEnrollment_works() {
-        val menu = scraper.extractMenu(auth)
-        val sections = scraper.extractSections(
+        val menu = JournalScraper.extractMenu(auth)
+        val sections = JournalScraper.extractSections(
             LocalDate.of(2023, 4, 25),
             JournalFilter(
                 section = menu.sections.getKey("Секция БАДМИНТОН"),
@@ -55,18 +56,16 @@ class JournalScraperUnitTest {
             ),
             auth
         )
-        assertFalse(scraper.isAvailableForEnrollment(sections[1], auth))
+        assertFalse(JournalScraper.isAvailableForEnrollment(sections[1], auth))
     }
 
     companion object {
-        lateinit var scraper: JournalScraper
         lateinit var auth: CookieAuth
 
         @JvmStatic
         @BeforeClass
         fun setup() {
-            scraper = JournalScraper()
-            auth = scraper.authenticate("???", "???")!!
+            auth = JournalScraper.authenticate("???", "???")!!
         }
     }
 }

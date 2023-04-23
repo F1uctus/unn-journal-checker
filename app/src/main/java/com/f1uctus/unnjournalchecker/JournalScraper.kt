@@ -1,5 +1,7 @@
 package com.f1uctus.unnjournalchecker
 
+import android.util.Log
+import com.f1uctus.unnjournalchecker.common.*
 import it.skrape.core.document
 import it.skrape.fetcher.*
 import it.skrape.selects.*
@@ -7,43 +9,44 @@ import it.skrape.selects.html5.*
 import kotlinx.serialization.Serializable
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.format.DateTimeFormatter
 
-val hourMinuteFmt = DateTimeFormatter.ofPattern("HH:mm")!!
-val dmyFmt = DateTimeFormatter.ofPattern("dd.MM.yyyy")!!
-val ymdFmt = DateTimeFormatter.ofPattern("yyyy-MM-dd")!!
-
-private val authResponseRegex = Regex("""\d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d(.*?)OK""", RegexOption.IGNORE_CASE)
+private val authResponseRegex =
+    Regex("""\d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d(.*?)OK""", RegexOption.IGNORE_CASE)
 private val timeRegex = Regex("""(\d\d):(\d\d)\s*-\s*(\d\d):(\d\d)""")
 private val classLinkRegex = Regex("""getpopup\s*\((\d+)\)""", RegexOption.IGNORE_CASE)
 private val styleTopRegex = Regex("""top:\s*(\d+)px""", RegexOption.IGNORE_CASE)
 
 @Serializable
 data class CookieAuth(val login: String, val hash: String) {
-    fun toFormString(): String = "login=$login; hash=$hash"
+    fun toCookieHeaderString(): String = "login=$login; hash=$hash"
 }
 
-class JournalScraper {
+object JournalScraper {
     private data class WeekTimetable(
         val timeIntervals: List<String>,
         val sectionLinks: List<DocElement>,
     )
 
     fun authenticate(login: String, password: String): CookieAuth? {
-        val authResponse = skrape(HttpFetcher) {
-            request {
-                method = Method.POST
-                url = "https://journal.unn.ru/auth.php"
-                body {
-                    form("login=$login&password=$password")
+        val authResponse = try {
+            skrape(HttpFetcher) {
+                request {
+                    method = Method.POST
+                    url = "https://journal.unn.ru/auth.php"
+                    body {
+                        form("login=$login&password=$password")
+                    }
+                    timeout = 10000
                 }
-                timeout = 10000
+                response { responseBody }
             }
-            response { responseBody }
+        } catch (e: Exception) {
+            Log.w(JournalScraper::class.simpleName, e)
+            null
         }
-        return authResponseRegex.find(authResponse)?.let { match ->
-            CookieAuth(login, match.groupValues[1])
-        }
+        return authResponse
+            ?.let(authResponseRegex::find)
+            ?.let { match -> CookieAuth(login, match.groupValues[1]) }
     }
 
     fun extractMenu(auth: CookieAuth): JournalMenu {
@@ -51,7 +54,7 @@ class JournalScraper {
             request {
                 method = Method.POST
                 url = "https://journal.unn.ru/section/getmenu.php"
-                headers = mapOf("Cookie" to auth.toFormString())
+                headers = mapOf("Cookie" to auth.toCookieHeaderString())
                 body {
                     form(
                         listOf(
@@ -59,7 +62,7 @@ class JournalScraper {
                             "zd=0",
                             "lec=0",
                             "stud=${auth.login}",
-                            "date=${LocalDate.now().format(ymdFmt)}",
+                            "date=${LocalDate.now().yearMonthDay}",
                             "type=2",
                             "view=0",
                             "lang=ru",
@@ -74,23 +77,28 @@ class JournalScraper {
                     }
                 }
                 JournalMenu(
-                    lectors = document.select("#lector", mapFromOptions),
-                    sections = document.select("#section", mapFromOptions),
-                    buildings = document.select("#zd", mapFromOptions),
+                    sections = document.select("#section", mapFromOptions)
+                        .mapValues { (i, s) -> if (i == 0) "Любая секция" else s },
+                    lectors = document.select("#lector", mapFromOptions)
+                        .mapValues { (i, s) -> if (i == 0) "Любой преподаватель" else s },
+                    buildings = document.select("#zd", mapFromOptions)
+                        .mapValues { (i, s) -> if (i == 0) "Любое здание" else s },
                 )
             }
         }
     }
 
+    const val FILTER_URL = "https://journal.unn.ru/section/index.php"
+
     fun buildFilterUrl(
         date: LocalDate,
         selection: JournalFilter,
     ): String {
-        return "https://journal.unn.ru/section/index.php?" + listOf(
+        return "$FILTER_URL?" + listOf(
             "section[]=${selection.section ?: 0}",
             "zd[]=${selection.building ?: 0}",
             "lec[]=${selection.lector ?: 0}",
-            "date=${date.format(ymdFmt)}",
+            "date=${date.yearMonthDay}",
             "type=2",
             "view=0",
         ).joinToString("&")
@@ -105,7 +113,7 @@ class JournalScraper {
             request {
                 method = Method.POST
                 url = "https://journal.unn.ru/section/schedule.php"
-                headers = mapOf("Cookie" to auth.toFormString())
+                headers = mapOf("Cookie" to auth.toCookieHeaderString())
                 body {
                     form(
                         listOf(
@@ -113,7 +121,7 @@ class JournalScraper {
                             "zd=${selection.building ?: 0}",
                             "lec=${selection.lector ?: 0}",
                             "stud=${auth.login}",
-                            "date=${date.format(ymdFmt)}",
+                            "date=${date.yearMonthDay}",
                             "type=2",
                             "view=0",
                             "lang=ru",
@@ -162,18 +170,21 @@ class JournalScraper {
                 val top = topStr.toInt()
 
                 val index = (top / 55) - 1
-                val timeInterval = extracted.timeIntervals[index];
+                val timeInterval = extracted.timeIntervals[index]
                 val startTime = LocalTime.parse(
                     timeInterval.substringBefore('-').trim(),
-                    hourMinuteFmt
+                    hoursMinutesFormat
                 )
                 val endTime = LocalTime.parse(
                     timeInterval.substringAfter('-').trim(),
-                    hourMinuteFmt
+                    hoursMinutesFormat
                 )
 
                 val dayText = dayDiv.children[0].children.last().text
-                val dayDate = LocalDate.parse(dayText + "." + LocalDate.now().year, dmyFmt)
+                val dayDate = LocalDate.parse(
+                    dayText + "." + LocalDate.now().year,
+                    dayMonthYearFormat
+                )
 
                 val idStr = classLinkRegex.find(link.attribute("onclick"))?.groupValues?.get(1)
                 if (idStr == null || idStr.toIntOrNull() == null) continue
@@ -195,7 +206,7 @@ class JournalScraper {
             request {
                 method = Method.POST
                 url = "https://journal.unn.ru/section/eventinfo.php"
-                headers = mapOf("Cookie" to auth.toFormString())
+                headers = mapOf("Cookie" to auth.toCookieHeaderString())
                 body {
                     form("oid=${section.id}")
                 }

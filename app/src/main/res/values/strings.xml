@@ -1,3 +1,15 @@
 <resources>
     <string name="app_name">UNN Journal Checker</string>
+    <string name="username">Имя пользователя</string>
+    <string name="password">Пароль</string>
+    <string name="logIn">Войти</string>
+    <string name="confirmLogoutDialog">Разлогиниться и сбросить все фильтры?</string>
+    <string name="yes">Да</string>
+    <string name="no">Нет</string>
+    <string name="confirmResetFiltersDialog">Сбросить все фильтры?</string>
+    <string name="noEnrollmentOptions">Нет доступных мест для записи</string>
+    <string name="enrollmentAvailable">Доступна запись</string>
+    <string name="journalCheckFailed">Не удалось проверить журнал</string>
+    <string name="checkingTheJournal">Проверка журнала...</string>
+    <string name="nextCheckAt">"Следующая проверка в "</string>
 </resources>

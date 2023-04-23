@@ -1,4 +1,4 @@
-package com.f1uctus.unnjournalchecker.common;
+package com.f1uctus.unnjournalchecker.common
 
 import android.app.AlarmManager
 import android.app.NotificationManager

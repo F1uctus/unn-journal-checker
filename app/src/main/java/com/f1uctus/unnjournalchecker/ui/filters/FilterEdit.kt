@@ -1,21 +1,21 @@
-package com.f1uctus.unnjournalchecker.ui
+package com.f1uctus.unnjournalchecker.ui.filters
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.f1uctus.unnjournalchecker.JournalFilter
-import com.f1uctus.unnjournalchecker.JournalMenu
+import com.f1uctus.unnjournalchecker.*
 import com.f1uctus.unnjournalchecker.ui.theme.UNNJournalCheckerTheme
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 @Composable
-fun DropdownEditBox(items: Map<Int, String>, onSelect: (Int, String) -> Unit) {
+fun <K, V> DropdownEditBox(items: Map<K, V>, onSelect: (K, V) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     val indexedItems = buildMap { items.onEachIndexed(::put) }
     var selectedIndex by remember { mutableStateOf(0) }
@@ -33,7 +33,7 @@ fun DropdownEditBox(items: Map<Int, String>, onSelect: (Int, String) -> Unit) {
         ) {
             indexedItems.forEach { (index, entry) ->
                 DropdownMenuItem(
-                    { Text(text = entry.value) },
+                    { Text(entry.value.toString()) },
                     modifier = Modifier
                         .padding(horizontal = 20.dp),
                     onClick = {
@@ -49,35 +49,38 @@ fun DropdownEditBox(items: Map<Int, String>, onSelect: (Int, String) -> Unit) {
 
 @Composable
 fun FilterEditBox(
-    menu: JournalMenu,
-    onClose: () -> Unit,
-    onSave: (JournalFilter) -> Unit
+    filter: MutableState<JournalFilter>,
+    demoMenu: JournalMenu? = null,
 ) {
-    var settings by remember {
-        mutableStateOf(JournalFilter(0, 0, 0))
-    }
-    Card {
-        Column(
-            modifier = androidx.compose.ui.Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(15.dp)
-        ) {
-            DropdownEditBox(menu.sections) { id, _ ->
-                settings = settings.copy(section = id)
-            }
-            DropdownEditBox(menu.lectors) { id, _ ->
-                settings = settings.copy(lector = id)
-            }
-            DropdownEditBox(menu.buildings) { id, _ ->
-                settings = settings.copy(building = id)
-            }
-            Row {
-                OutlinedButton(onClick = onClose) {
-                    Icon(Icons.Filled.Close, "")
+    var f by filter
+    val scope = rememberCoroutineScope()
+    val dataStore = LocalContext.current.dataStore
+    val menu by (demoMenu?.let(::mutableStateOf)?.let { remember { it } })
+        ?: dataStore.menu.collectAsState(initial = null)
+    Column(
+        verticalArrangement = Arrangement.spacedBy(15.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .defaultMinSize(minWidth = 100.dp, minHeight = 155.dp)
+    ) {
+        if (menu == null) {
+            CircularProgressIndicator(modifier = Modifier.fillMaxWidth())
+            LaunchedEffect(0) {
+                scope.launch {
+                    dataStore.setMenu(
+                        dataStore.cookie.first()?.let(JournalScraper::extractMenu)
+                    )
                 }
-                Spacer(androidx.compose.ui.Modifier.padding(10.dp))
-                Button(onClick = { onSave(settings) }) {
-                    Icon(Icons.Filled.Done, "")
-                }
+            }
+        } else {
+            DropdownEditBox(menu!!.sections) { id, _ ->
+                f = f.copy(section = id)
+            }
+            DropdownEditBox(menu!!.lectors) { id, _ ->
+                f = f.copy(lector = id)
+            }
+            DropdownEditBox(menu!!.buildings) { id, _ ->
+                f = f.copy(building = id)
             }
         }
     }
@@ -88,6 +91,9 @@ fun FilterEditBox(
 fun FilterEditBoxPreview() {
     UNNJournalCheckerTheme {
         FilterEditBox(
+            remember {
+                mutableStateOf(JournalFilter(1, 1, 1))
+            },
             JournalMenu(
                 sections = mapOf(
                     1 to "Секция БАДМИНТОН",
@@ -100,9 +106,7 @@ fun FilterEditBoxPreview() {
                 buildings = mapOf(
                     1 to "Спортивный комплекс на Гагарина"
                 )
-            ),
-            {},
-            {},
+            )
         )
     }
 }
