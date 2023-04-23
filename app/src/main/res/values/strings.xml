@@ -12,4 +12,5 @@
     <string name="journalCheckFailed">Не удалось проверить журнал</string>
     <string name="checkingTheJournal">Проверка журнала...</string>
     <string name="nextCheckAt">"Следующая проверка в "</string>
+    <string name="journalIsCheckedInBackground">Журнал отслеживается в фоне</string>
 </resources>

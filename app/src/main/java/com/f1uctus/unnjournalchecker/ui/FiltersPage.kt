@@ -148,7 +148,9 @@ fun FiltersPage(
                 }
                 filters.forEach {
                     FilterBox(it, onRefresh = {
-                        setEnrollmentCheckAlarm(context)
+                        scope.launch {
+                            setEnrollmentCheckAlarm(context)
+                        }
                     }, onDelete = {
                         scope.launch {
                             dataStore.removeFilter(it)
