@@ -16,7 +16,7 @@ jobs:
       uses: actions/setup-java@v3
       with:
         distribution: 'temurin'
-        java-version: '17'
+        java-version: '11'
 
     - name: Mark .gradlew as executable
       run: chmod +x ./gradlew
@@ -27,5 +27,5 @@ jobs:
     - name: Release using Hub
       uses: kyze8439690/action-release-releaseapk@master
       env:
-       GITHUB_TOKEN: ${{ github.token }}
+       GITHUB_TOKEN: ${{ secrets.CI_TOKEN }}
        APP_FOLDER: app
