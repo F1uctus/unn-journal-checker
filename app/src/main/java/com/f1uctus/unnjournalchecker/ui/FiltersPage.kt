@@ -59,71 +59,7 @@ fun FiltersPage(
         Box(modifier = Modifier.padding(contentPadding)) {
             //
             //
-            if (filterPopupVisible) AlertDialog(
-                onDismissRequest = { filterPopupVisible = false },
-                dismissButton = {
-                    OutlinedButton({ filterPopupVisible = false }) {
-                        Icon(Icons.Filled.Close, "")
-                    }
-                },
-                confirmButton = {
-                    Button({
-                        if (filter.value.isEmpty) return@Button
-                        scope.launch {
-                            dataStore.addFilter(filter.value)
-                            filterPopupVisible = false
-                            setEnrollmentCheckAlarm(context)
-                        }
-                    }) {
-                        Icon(Icons.Filled.Done, "")
-                    }
-                },
-                text = { FilterEditBox(filter, demoMenu) }
-            )
-            //
-            //
-            else if (clearAllDialogVisible) AlertDialog(
-                text = { Text(stringResource(R.string.confirmResetFiltersDialog)) },
-                confirmButton = {
-                    Button({
-                        scope.launch { dataStore.clearFilters() }
-                        context.notificationManager.cancelAll()
-                        clearAllDialogVisible = false
-                    }) {
-                        Text(stringResource(R.string.yes))
-                    }
-                },
-                dismissButton = {
-                    Button({ clearAllDialogVisible = false }) {
-                        Text(stringResource(R.string.no))
-                    }
-                },
-                onDismissRequest = { clearAllDialogVisible = false }
-            )
-            //
-            //
-            else if (logoutDialogVisible) AlertDialog(
-                text = { Text(stringResource(R.string.confirmLogoutDialog)) },
-                confirmButton = {
-                    Button({
-                        scope.launch { dataStore.clear() }
-                        context.notificationManager.cancelAll()
-                        navController.navigate(Routes.Login.route)
-                        logoutDialogVisible = false
-                    }) {
-                        Text(stringResource(R.string.yes))
-                    }
-                },
-                dismissButton = {
-                    Button({ logoutDialogVisible = false }) {
-                        Text(stringResource(R.string.no))
-                    }
-                },
-                onDismissRequest = { logoutDialogVisible = false }
-            )
-            //
-            //
-            else Column(
+            Column(
                 modifier = Modifier.padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -158,6 +94,70 @@ fun FiltersPage(
                     })
                 }
             }
+            //
+            //
+            if (filterPopupVisible) AlertDialog(
+                onDismissRequest = { filterPopupVisible = false },
+                dismissButton = {
+                    OutlinedButton({ filterPopupVisible = false }) {
+                        Icon(Icons.Filled.Close, "")
+                    }
+                },
+                confirmButton = {
+                    Button({
+                        if (filter.value.isEmpty) return@Button
+                        scope.launch {
+                            dataStore.addFilter(filter.value)
+                            filterPopupVisible = false
+                            setEnrollmentCheckAlarm(context)
+                        }
+                    }) {
+                        Icon(Icons.Filled.Done, "")
+                    }
+                },
+                text = { FilterEditBox(filter, demoMenu) }
+            )
+            //
+            //
+            if (clearAllDialogVisible) AlertDialog(
+                text = { Text(stringResource(R.string.confirmResetFiltersDialog)) },
+                confirmButton = {
+                    Button({
+                        scope.launch { dataStore.clearFilters() }
+                        context.notificationManager.cancelAll()
+                        clearAllDialogVisible = false
+                    }) {
+                        Text(stringResource(R.string.yes))
+                    }
+                },
+                dismissButton = {
+                    Button({ clearAllDialogVisible = false }) {
+                        Text(stringResource(R.string.no))
+                    }
+                },
+                onDismissRequest = { clearAllDialogVisible = false }
+            )
+            //
+            //
+            if (logoutDialogVisible) AlertDialog(
+                text = { Text(stringResource(R.string.confirmLogoutDialog)) },
+                confirmButton = {
+                    Button({
+                        scope.launch { dataStore.clear() }
+                        context.notificationManager.cancelAll()
+                        navController.navigate(Routes.Login.route)
+                        logoutDialogVisible = false
+                    }) {
+                        Text(stringResource(R.string.yes))
+                    }
+                },
+                dismissButton = {
+                    Button({ logoutDialogVisible = false }) {
+                        Text(stringResource(R.string.no))
+                    }
+                },
+                onDismissRequest = { logoutDialogVisible = false }
+            )
         }
     }
 }
