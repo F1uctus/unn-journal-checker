@@ -1,0 +1,31 @@
+name: "Publish release .apk with Gradle"
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup JDK
+    - uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Mark .gradlew as executable
+      run: chmod +x ./gradlew
+
+    - name: Build release .apk
+      run: ./gradlew assembleRelease
+
+    - name: Release using Hub
+      uses: kyze8439690/action-release-releaseapk@master
+      env:
+       GITHUB_TOKEN: ${{ github.token }}
+       APP_FOLDER: app
