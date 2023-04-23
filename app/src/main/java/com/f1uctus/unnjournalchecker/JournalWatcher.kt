@@ -154,6 +154,9 @@ private fun updateNotification(
             .setPriority(NotificationCompat.PRIORITY_MIN)
             .setContentIntent(openAppIntent)
             .setOngoing(true)
+            .setOnlyAlertOnce(true)
     )
+    val n = nb.build()
+    n.flags = n.flags or Notification.FLAG_FOREGROUND_SERVICE
     ctx.notificationManager.notify(ongoingNotificationId, nb.build())
 }
