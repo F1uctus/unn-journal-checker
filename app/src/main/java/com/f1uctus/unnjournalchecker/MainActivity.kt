@@ -276,7 +276,7 @@ fun FiltersPage(
                     Text("Нет")
                 }
             },
-            onDismissRequest = { clearAllDialogVisible = false }
+            onDismissRequest = { logoutDialogVisible = false }
         )
         //
         //
