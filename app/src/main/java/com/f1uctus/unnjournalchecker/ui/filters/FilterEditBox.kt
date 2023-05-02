@@ -1,7 +1,7 @@
 package com.f1uctus.unnjournalchecker.ui.filters
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,9 +21,9 @@ fun FilterEditBox(
 ) {
     var f by filter
     val scope = rememberCoroutineScope()
-    val dataStore = LocalContext.current.dataStore
+    val ds = LocalContext.current.dataStore
     val menu by (demoMenu?.let(::mutableStateOf)?.let { remember { it } })
-        ?: dataStore.menu.collectAsState(initial = null)
+        ?: ds.menu.collectAsState(initial = null)
     Column(
         verticalArrangement = Arrangement.spacedBy(15.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -34,8 +34,8 @@ fun FilterEditBox(
             CircularProgressIndicator(modifier = Modifier.fillMaxWidth())
             LaunchedEffect(0) {
                 scope.launch {
-                    dataStore.setMenu(
-                        dataStore.cookie.first()?.let(JournalScraper::extractMenu)
+                    ds.setMenu(
+                        ds.cookie.first()?.let(JournalScraper::extractMenu)
                     )
                 }
             }

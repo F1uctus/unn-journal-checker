@@ -10,7 +10,15 @@
     <string name="noEnrollmentOptions">Нет доступных мест для записи</string>
     <string name="enrollmentAvailable">Доступна запись</string>
     <string name="journalCheckFailed">Не удалось проверить журнал</string>
-    <string name="checkingTheJournal">Проверка журнала...</string>
+    <string name="checkingTheJournal">Проверка журнала…</string>
     <string name="nextCheckAt">"Следующая проверка в "</string>
     <string name="journalIsCheckedInBackground">Журнал отслеживается в фоне</string>
+    <string name="enrollmentCheckParameters">Параметры проверки секций</string>
+    <string name="every">Каждые</string>
+    <string name="addToPowerSavingWhitelist">Разрешить работу в фоновом режиме</string>
+    <string name="miscellaneous">Прочее</string>
+    <string name="enrollingCheckResults">Результаты проверки секций</string>
+    <string name="goToSettings">Настроить</string>
+    <string name="hide">Скрыть</string>
+    <string name="powerSavingExclusionPurpose">Для надёжной работы приложения нужно разрешение на постоянную работу в фоновом режиме.</string>
 </resources>

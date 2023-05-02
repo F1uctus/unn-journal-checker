@@ -88,7 +88,8 @@ val DataStore<Preferences>.sectionCheckInterval: Flow<Duration>
 
 suspend fun DataStore<Preferences>.setSectionCheckInterval(value: Duration?) =
     edit {
-        it[sectionCheckIntervalPrefKey] = (value ?: defaultSectionCheckInterval).toMinutes()
+        it[sectionCheckIntervalPrefKey] =
+            (value ?: defaultSectionCheckInterval).toMinutes()
     }
 
 // endregion ////////////////////

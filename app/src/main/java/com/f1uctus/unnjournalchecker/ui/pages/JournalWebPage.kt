@@ -1,4 +1,4 @@
-package com.f1uctus.unnjournalchecker.ui
+package com.f1uctus.unnjournalchecker.ui.pages
 
 import android.annotation.SuppressLint
 import android.view.ViewGroup
@@ -21,8 +21,8 @@ fun JournalWebPage(
     navController: NavHostController,
     url: String,
 ) {
-    val dataStore = LocalContext.current.dataStore
-    val cookie by dataStore.cookie.collectAsState(initial = null)
+    val ds = LocalContext.current.dataStore
+    val cookie by ds.cookie.collectAsState(initial = null)
     if (cookie == null) {
         Column(
             verticalArrangement = Arrangement.Center,
@@ -66,7 +66,6 @@ fun JournalWebView(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
-            webViewClient = WebViewClient()
             loadUrl(
                 url, mapOf(
                     "Cookie" to cookieAuth.toCookieHeaderString()

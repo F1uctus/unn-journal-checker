@@ -1,4 +1,4 @@
-package com.f1uctus.unnjournalchecker.ui
+package com.f1uctus.unnjournalchecker.ui.pages
 
 import android.app.TimePickerDialog
 import androidx.compose.foundation.background
@@ -9,6 +9,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -16,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.f1uctus.unnjournalchecker.*
+import com.f1uctus.unnjournalchecker.R
 import com.f1uctus.unnjournalchecker.ui.theme.UNNJournalCheckerTheme
 import kotlinx.coroutines.launch
 import java.time.Duration
@@ -27,9 +29,6 @@ fun unitCase(n: Long, vararg titles: String): String = "$n ${
         else arrayOf(2, 0, 1, 1, 1, 2)[(n % 10).coerceAtMost(5).toInt()]
     ]
 }"
-
-fun unitCase(n: Int, vararg titles: String): String =
-    unitCase(n.toLong(), *titles)
 
 @Composable
 fun Section(
@@ -52,16 +51,16 @@ fun Section(
 fun SettingsPage(navController: NavHostController) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    val dataStore = context.dataStore
+    val ds = context.dataStore
 
-    val sectionCheckInterval by dataStore.sectionCheckInterval
+    val sectionCheckInterval by ds.sectionCheckInterval
         .collectAsState(initial = defaultSectionCheckInterval)
 
     val timePickerDialog = TimePickerDialog(
         context,
         { _, hour: Int, min: Int ->
             scope.launch {
-                dataStore.setSectionCheckInterval(
+                ds.setSectionCheckInterval(
                     Duration.ofHours(hour.toLong()).plusMinutes(min.toLong())
                 )
             }
@@ -84,7 +83,7 @@ fun SettingsPage(navController: NavHostController) {
                 .spacedBy(15.dp, alignment = Alignment.Top),
             horizontalAlignment = Alignment.Start,
         ) {
-            Section("Параметры проверки секций") {
+            Section(stringResource(R.string.enrollmentCheckParameters)) {
                 OutlinedCard(
                     Modifier
                         .fillMaxWidth()
@@ -92,7 +91,7 @@ fun SettingsPage(navController: NavHostController) {
                 ) {
                     Row {
                         Text(
-                            "Каждые",
+                            stringResource(R.string.every),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier
@@ -121,12 +120,12 @@ fun SettingsPage(navController: NavHostController) {
                     }
                 }
             }
-            Section("Прочее") {
+            Section(stringResource(R.string.miscellaneous)) {
                 OutlinedButton(
                     { excludeFromPowerSavingDialogIsOpen = true },
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text("Разрешить работу в фоновом режиме")
+                    Text(stringResource(R.string.addToPowerSavingWhitelist))
                 }
             }
         }

@@ -11,11 +11,12 @@ import androidx.activity.compose.setContent
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.datastore.preferences.preferencesDataStore
+import androidx.navigation.NavController
 import androidx.navigation.compose.*
 import androidx.navigation.navDeepLink
 import com.f1uctus.unnjournalchecker.JournalScraper.FILTER_URL
 import com.f1uctus.unnjournalchecker.common.notificationManager
-import com.f1uctus.unnjournalchecker.ui.*
+import com.f1uctus.unnjournalchecker.ui.pages.*
 import com.f1uctus.unnjournalchecker.ui.theme.UNNJournalCheckerTheme
 import kotlinx.coroutines.launch
 
@@ -28,7 +29,7 @@ class MainActivity : ComponentActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 notificationChannelId,
-                "Enrolling check results",
+                getString(R.string.enrollingCheckResults),
                 NotificationManager.IMPORTANCE_HIGH
             )
             notificationManager.createNotificationChannel(channel)
@@ -51,10 +52,9 @@ class MainActivity : ComponentActivity() {
 fun App() {
     val navController = rememberNavController()
     val scope = rememberCoroutineScope()
-    val context = LocalContext.current
-    val dataStore = context.dataStore
-    val cookie by dataStore.cookie.collectAsState(initial = null)
-    val firstRun by dataStore.firstRun.collectAsState(initial = false)
+    val ds = LocalContext.current.dataStore
+    val cookie by ds.cookie.collectAsState(initial = null)
+    val firstRun by ds.firstRun.collectAsState(initial = false)
 
     UNNJournalCheckerTheme {
         NavHost(
@@ -83,7 +83,7 @@ fun App() {
                 })
             ) {
                 val url = (it.arguments
-                    ?.get("android-support-nav:controller:deepLinkIntent") as Intent?)
+                    ?.get(NavController.KEY_DEEP_LINK_INTENT) as Intent?)
                     ?.data
                     ?.toString()
                 if (url == null) {
@@ -98,7 +98,7 @@ fun App() {
     if (firstRun) {
         ExcludeFromPowerSavingDialog {
             scope.launch {
-                dataStore.setFirstRun(false)
+                ds.setFirstRun(false)
             }
         }
     }

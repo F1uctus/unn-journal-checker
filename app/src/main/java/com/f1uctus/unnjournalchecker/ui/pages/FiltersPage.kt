@@ -1,4 +1,4 @@
-package com.f1uctus.unnjournalchecker.ui
+package com.f1uctus.unnjournalchecker.ui.pages
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -32,8 +32,8 @@ fun FiltersPage(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val dataStore = context.dataStore
-    val filters by (demoFilters?.let(::flowOf) ?: dataStore.filters)
+    val ds = context.dataStore
+    val filters by (demoFilters?.let(::flowOf) ?: ds.filters)
         .collectAsState(initial = setOf())
     val filter = remember { mutableStateOf(JournalFilter.empty) }
     var filterPopupVisible by remember { mutableStateOf(false) }
@@ -86,10 +86,7 @@ fun FiltersPage(
                 filters.forEach {
                     FilterControlBox(it, onPause = {
                         scope.launch {
-                            dataStore.updateFilter(
-                                it,
-                                it.copy(paused = !it.paused)
-                            )
+                            ds.updateFilter(it, it.copy(paused = !it.paused))
                         }
                     }, onRefresh = {
                         scope.launch {
@@ -97,7 +94,7 @@ fun FiltersPage(
                         }
                     }, onDelete = {
                         scope.launch {
-                            dataStore.removeFilter(it)
+                            ds.removeFilter(it)
                         }
                     })
                 }
@@ -115,7 +112,7 @@ fun FiltersPage(
                     Button({
                         if (filter.value.isEmpty) return@Button
                         scope.launch {
-                            dataStore.addFilter(filter.value)
+                            ds.addFilter(filter.value)
                             filterPopupVisible = false
                             setEnrollmentCheckAlarm(context)
                         }
@@ -131,7 +128,7 @@ fun FiltersPage(
                 text = { Text(stringResource(R.string.confirmResetFiltersDialog)) },
                 confirmButton = {
                     Button({
-                        scope.launch { dataStore.clearFilters() }
+                        scope.launch { ds.clearFilters() }
                         context.notificationManager.cancelAll()
                         clearAllDialogVisible = false
                     }) {
@@ -151,7 +148,7 @@ fun FiltersPage(
                 text = { Text(stringResource(R.string.confirmLogoutDialog)) },
                 confirmButton = {
                     Button({
-                        scope.launch { dataStore.clear() }
+                        scope.launch { ds.clear() }
                         context.notificationManager.cancelAll()
                         navController.navigate(Routes.Login.route)
                         logoutDialogVisible = false

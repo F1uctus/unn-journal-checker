@@ -1,4 +1,4 @@
-package com.f1uctus.unnjournalchecker.ui
+package com.f1uctus.unnjournalchecker.ui.pages
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -17,6 +17,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.f1uctus.unnjournalchecker.*
 import com.f1uctus.unnjournalchecker.R
+import com.f1uctus.unnjournalchecker.ui.LoadingDialog
 import com.f1uctus.unnjournalchecker.ui.theme.UNNJournalCheckerTheme
 import kotlinx.coroutines.launch
 
@@ -24,7 +25,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun LoginPage(navController: NavHostController) {
     val scope = rememberCoroutineScope()
-    val dataStore = LocalContext.current.dataStore
+    val ds = LocalContext.current.dataStore
     Surface(
         modifier = Modifier
             .fillMaxSize()
@@ -32,7 +33,10 @@ fun LoginPage(navController: NavHostController) {
     ) {
         Column(
             modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp, alignment = CenterVertically),
+            verticalArrangement = Arrangement.spacedBy(
+                20.dp,
+                alignment = CenterVertically
+            ),
             horizontalAlignment = CenterHorizontally,
         ) {
 
@@ -57,7 +61,7 @@ fun LoginPage(navController: NavHostController) {
                     onClick = {
                         authorizing = true
                         scope.launch {
-                            dataStore.setCookie(
+                            ds.setCookie(
                                 JournalScraper.authenticate(
                                     username.text,
                                     password.text

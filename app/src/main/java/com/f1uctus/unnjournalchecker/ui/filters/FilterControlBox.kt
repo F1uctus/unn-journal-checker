@@ -21,10 +21,10 @@ fun FilterControlBox(
     onDelete: (JournalFilter) -> Unit,
     demoMenu: JournalMenu? = null
 ) {
-    val dataStore = LocalContext.current.dataStore
+    val ds = LocalContext.current.dataStore
     val menu by demoMenu
         ?.let(::mutableStateOf)?.let { remember { it } }
-        ?: dataStore.menu.filterNotNull()
+        ?: ds.menu.filterNotNull()
             .collectAsState(initial = JournalMenu.empty)
     Card {
         Column(

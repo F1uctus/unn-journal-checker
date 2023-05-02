@@ -10,11 +10,15 @@ import kotlinx.serialization.Serializable
 import java.time.LocalDate
 import java.time.LocalTime
 
-private val authResponseRegex =
-    Regex("""\d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d(.*?)OK""", RegexOption.IGNORE_CASE)
-private val timeRegex = Regex("""(\d\d):(\d\d)\s*-\s*(\d\d):(\d\d)""")
-private val classLinkRegex = Regex("""getpopup\s*\((\d+)\)""", RegexOption.IGNORE_CASE)
-private val styleTopRegex = Regex("""top:\s*(\d+)px""", RegexOption.IGNORE_CASE)
+private enum class Patterns(regexString: String) {
+    AuthResponse("""\d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d(.*?)OK"""),
+    Time("""(\d\d):(\d\d)\s*-\s*(\d\d):(\d\d)"""),
+    ClassLink("""getpopup\s*\((\d+)\)"""),
+    StyleTop("""top:\s*(\d+)px"""),
+    SectionBlockColor(".*#(FFE4C4|B0E0E6).*");
+
+    val regex = Regex(regexString, RegexOption.IGNORE_CASE)
+}
 
 @Serializable
 data class CookieAuth(val login: String, val hash: String) {
@@ -45,7 +49,7 @@ object JournalScraper {
             null
         }
         return authResponse
-            ?.let(authResponseRegex::find)
+            ?.let(Patterns.AuthResponse.regex::find)
             ?.let { match -> CookieAuth(login, match.groupValues[1]) }
     }
 
@@ -73,7 +77,10 @@ object JournalScraper {
             response {
                 val mapFromOptions: CssSelector.() -> Map<Int, String> = {
                     findFirst {
-                        children.associateBy({ it.attribute("value").toInt() }, { it.text.trim() })
+                        children.associateBy(
+                            { it.attribute("value").toInt() },
+                            { it.text.trim() }
+                        )
                     }
                 }
                 JournalMenu(
@@ -133,7 +140,10 @@ object JournalScraper {
                 WeekTimetable(
                     timeIntervals = document.p {
                         try {
-                            findAll { filter { it.text.matches(timeRegex) }.map { it.text } }
+                            findAll {
+                                filter { it.text.matches(Patterns.Time.regex) }
+                                    .map { it.text }
+                            }
                         } catch (e: ElementNotFoundException) {
                             listOf()
                         }
@@ -143,9 +153,10 @@ object JournalScraper {
                             findAll {
                                 filter { e ->
                                     // a clickable section block
-                                    (e.attributes["onclick"]?.matches(classLinkRegex) == true) and
+                                    (e.attributes["onclick"]?.matches
+                                        (Patterns.ClassLink.regex) == true) and
                                         // color of non-occupied section
-                                        Regex(".*#(FFE4C4|B0E0E6).*", RegexOption.IGNORE_CASE)
+                                        Patterns.SectionBlockColor.regex
                                             .matches(e.attributes["style"].orEmpty())
                                 }
                             }
@@ -165,7 +176,9 @@ object JournalScraper {
                 val dayTotalSections = dayDiv.children[2].children.size
                 if (dayTotalSections != extracted.timeIntervals.size) continue
 
-                val topStr = styleTopRegex.find(link.attribute("style"))?.groupValues?.get(1)
+                val topStr = Patterns.StyleTop.regex
+                    .find(link.attribute("style"))
+                    ?.groupValues?.get(1)
                 if (topStr == null || topStr.toIntOrNull() == null) continue
                 val top = topStr.toInt()
 
@@ -186,7 +199,9 @@ object JournalScraper {
                     dayMonthYearFormat
                 )
 
-                val idStr = classLinkRegex.find(link.attribute("onclick"))?.groupValues?.get(1)
+                val idStr = Patterns.ClassLink.regex
+                    .find(link.attribute("onclick"))
+                    ?.groupValues?.get(1)
                 if (idStr == null || idStr.toIntOrNull() == null) continue
                 val id = idStr.toInt()
 

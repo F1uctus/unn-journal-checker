@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat.startActivity
 import com.f1uctus.unnjournalchecker.ui.theme.UNNJournalCheckerTheme
@@ -52,14 +53,11 @@ private fun ExcludeFromPowerSavingInternalDialog(
     AlertDialog(
         onDismissRequest = onClose,
         text = {
-            Text(
-                "Для надёжной работы приложения нужно разрешение на постоянную " +
-                    "работу в фоновом режиме."
-            )
+            Text(stringResource(R.string.powerSavingExclusionPurpose))
         },
         dismissButton = {
             OutlinedButton(onClose) {
-                Text("Скрыть")
+                Text(stringResource(R.string.hide))
             }
         },
         confirmButton = {
@@ -67,7 +65,7 @@ private fun ExcludeFromPowerSavingInternalDialog(
                 startActivity(ctx, intent!!, null)
                 onClose()
             }) {
-                Text("Настроить")
+                Text(stringResource(R.string.goToSettings))
             }
         },
     )
@@ -87,7 +85,7 @@ fun ExcludeFromPowerSavingDialog(onClose: () -> Unit) {
     }
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
 private fun ExcludeFromPowerSavingDialogPreview() {
     UNNJournalCheckerTheme {
