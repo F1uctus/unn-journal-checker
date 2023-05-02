@@ -1,4 +1,4 @@
-name: "Publish release .apk with Gradle"
+name: "Publish GitHub Release with debug .apk"
 
 on:
   release:
@@ -34,7 +34,7 @@ jobs:
       id: get_version
       run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
 
-    - name: Create Release and Upload debug .apk
+    - name: Create artifact with debug .apk
       uses: underwindfall/create-release-with-debugapk@v2.0.0
       env: 
         GITHUB_TOKEN: ${{ secrets.CI_TOKEN }}
