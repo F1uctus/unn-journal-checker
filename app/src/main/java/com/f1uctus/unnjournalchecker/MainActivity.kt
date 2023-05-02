@@ -96,6 +96,6 @@ fun App() {
 sealed class Routes(val route: String) {
     object Login : Routes("login")
     object Filters : Routes("filters")
-    object Settings: Routes("settings")
+    object Settings : Routes("settings")
     object JournalWebPage : Routes("JournalWebPage")
 }
