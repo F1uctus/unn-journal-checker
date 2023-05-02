@@ -22,9 +22,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoginPage(
-    navController: NavHostController,
-) {
+fun LoginPage(navController: NavHostController) {
     val scope = rememberCoroutineScope()
     val dataStore = LocalContext.current.dataStore
     Surface(

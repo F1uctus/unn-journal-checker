@@ -1,6 +1,5 @@
 package com.f1uctus.unnjournalchecker.ui.filters
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -10,42 +9,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.f1uctus.unnjournalchecker.*
+import com.f1uctus.unnjournalchecker.ui.DropdownEditBox
 import com.f1uctus.unnjournalchecker.ui.theme.UNNJournalCheckerTheme
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-
-@Composable
-fun <K, V> DropdownEditBox(items: Map<K, V>, onSelect: (K, V) -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
-    val indexedItems = buildMap { items.onEachIndexed(::put) }
-    var selectedIndex by remember { mutableStateOf(0) }
-    ElevatedCard {
-        Text(
-            items[indexedItems[selectedIndex]!!.key].toString(),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(10.dp)
-                .clickable(onClick = { expanded = true })
-        )
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-        ) {
-            indexedItems.forEach { (index, entry) ->
-                DropdownMenuItem(
-                    { Text(entry.value.toString()) },
-                    modifier = Modifier
-                        .padding(horizontal = 20.dp),
-                    onClick = {
-                        selectedIndex = index
-                        expanded = false
-                        onSelect(entry.key, entry.value)
-                    }
-                )
-            }
-        }
-    }
-}
 
 @Composable
 fun FilterEditBox(
