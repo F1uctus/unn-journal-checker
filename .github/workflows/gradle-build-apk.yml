@@ -32,7 +32,7 @@ jobs:
 
     - name: Get tag version
       id: get_version
-      run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+      run: echo "VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
 
     - name: Create artifact with debug .apk
       uses: underwindfall/create-release-with-debugapk@v2.0.0
