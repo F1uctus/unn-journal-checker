@@ -36,11 +36,7 @@ fun FiltersPage(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val dataStore = context.dataStore
-    val filters by (demoFilters?.let(::flowOf) ?: dataStore.data
-        .map { it[filtersPrefKey] }
-        .map {
-            it?.map(Json.Default::decodeFromString) ?: listOf()
-        })
+    val filters by (demoFilters?.let(::flowOf) ?: dataStore.filters)
         .collectAsState(initial = setOf())
     val filter = remember { mutableStateOf(JournalFilter.empty) }
     var filterPopupVisible by remember { mutableStateOf(false) }

@@ -11,11 +11,8 @@ import androidx.core.app.NotificationCompat.PRIORITY_DEFAULT
 import com.f1uctus.unnjournalchecker.common.*
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
 import java.time.*
 
 
@@ -95,14 +92,9 @@ private fun notifyOfAvailableSection(ctx: Context) {
         ctx.dataStore.cookie.first()
     } ?: throw Exception("No credentials")
     val filters = runBlocking {
-        ctx.dataStore.data
-            .map { it[filtersPrefKey] }
-            .map { it?.map { Json.decodeFromString<JournalFilter>(it) } ?: setOf() }
-            .first()
+        ctx.dataStore.filters.first()
     }
-
     val menu = JournalScraper.extractMenu(cookie)
-
     val avails = LinkedHashMap<String, Pair<JournalFilter, Section>>()
 
     var checkDate = LocalDate.now().startOfWeek
