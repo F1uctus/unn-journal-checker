@@ -15,24 +15,26 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.time.*
 
-
 const val notificationChannelId = "Enrolling"
+private const val pendingIntentRequestCode = 248657
 private const val ongoingNotificationId = 151389
-private val defaultInterval = Duration.ofMinutes(5)
+
+private inline fun <reified T> pendingIntent(ctx: Context) =
+    PendingIntent.getBroadcast(
+        ctx,
+        pendingIntentRequestCode,
+        Intent(ctx, T::class.java),
+        PendingIntent.FLAG_IMMUTABLE
+    )!!
 
 suspend fun setEnrollmentCheckAlarm(ctx: Context, delay: Duration = Duration.ZERO) {
-    val intent = Intent(ctx, EnrollmentCheckAlarmReceiver::class.java)
-    val pendingIntent = PendingIntent.getBroadcast(
-        ctx,
-        0,
-        intent,
-        PendingIntent.FLAG_MUTABLE
-    )
+    val interval = ctx.dataStore.sectionCheckInterval.first()
+    val pendingIntent = pendingIntent<PeriodicEnrollmentCheckReceiver>(ctx)
     val triggerTime = Instant.now().plus(delay)
     ctx.alarmManager.setRepeating(
         AlarmManager.RTC_WAKEUP,
         triggerTime.toEpochMilli(),
-        defaultInterval.toMillis(),
+        interval.toMillis(),
         pendingIntent
     )
     Log.i("setEnrollmentCheckAlarm", "Alarm initiated at $triggerTime")
@@ -45,25 +47,36 @@ class BootCompleteReceiver : BroadcastReceiver() {
     override fun onReceive(ctx: Context, intent: Intent) {
         if (intent.action.equals(Intent.ACTION_BOOT_COMPLETED)) {
             Log.i("BootCompleteReceiver", "Intent.ACTION_BOOT_COMPLETED")
-            runBlocking { setEnrollmentCheckAlarm(ctx, Duration.ofSeconds(15)) } // TODO test
+            runBlocking {
+                setEnrollmentCheckAlarm(  // TODO test
+                    ctx,
+                    Duration.ofSeconds(15)
+                )
+            }
         }
     }
 }
 
-class EnrollmentCheckAlarmReceiver : BroadcastReceiver() {
+class PeriodicEnrollmentCheckReceiver : BroadcastReceiver() {
     override fun onReceive(ctx: Context, intent: Intent) {
-        Log.i("EnrollmentCheckAlarm", "Alarm just fired")
-        val wl = ctx.powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "journal:ECA")
+        Log.i("PeriodicEnrollmentCheckAlarmReceiver", "Started")
+        val wl = ctx.powerManager.newWakeLock(
+            PowerManager.PARTIAL_WAKE_LOCK,
+            "journal:ECA"
+        )
         wl.acquire(Duration.ofMinutes(1).toMillis())
         notifyCheckStarted(ctx)
         wl.release()
-        Log.i("EnrollmentCheckAlarm", "Alarm completed")
+        Log.i("PeriodicEnrollmentCheckAlarmReceiver", "Completed")
+    }
+}
     }
 }
 
 private fun notifyCheckStarted(ctx: Context) {
-    Log.i("notifyCheckStarted", "Check just started")
-    val nextAlarmTime = LocalDateTime.now().plus(defaultInterval)
+    Log.i("notifyCheckStarted", "Started")
+    val interval = runBlocking { ctx.dataStore.sectionCheckInterval.first() }
+    val nextAlarmTime = LocalDateTime.now().plus(interval)
     updateNotification(ctx) { n ->
         n.setContentTitle(ctx.getString(R.string.checkingTheJournal))
     }
@@ -84,7 +97,7 @@ private fun notifyCheckStarted(ctx: Context) {
             )
         }
     }
-    Log.i("notifyCheckStarted", "Next check at $nextAlarmTime")
+    Log.i("notifyCheckStarted", "Completed. Next check at $nextAlarmTime")
 }
 
 private fun notifyOfAvailableSection(ctx: Context) {
@@ -100,14 +113,14 @@ private fun notifyOfAvailableSection(ctx: Context) {
     var checkDate = LocalDate.now().startOfWeek
     val lastMonth = checkDate.monthValue + 2
     while (checkDate.monthValue <= lastMonth) {
-        for (sel in filters) {
-            val secName = menu.section(sel) ?: "<N/A>"
-            val sections = JournalScraper.extractSections(checkDate, sel, cookie)
+        for (f in filters) {
+            val secName = menu.section(f) ?: "<N/A>"
+            val sections = JournalScraper.extractSections(checkDate, f, cookie)
             for (sec in sections) {
                 if (!JournalScraper.isAvailableForEnrollment(sec, cookie)) continue
 
-                avails["${sec.friendlyDate}: $secName (${menu.lectorSurname(sel)})"] =
-                    Pair(sel, sec)
+                val key = "${sec.friendlyDate}: $secName (${menu.lectorSurname(f)})"
+                avails[key] = Pair(f, sec)
                 updateNotification(ctx) { n ->
                     val openJournalIntent = Intent(
                         Intent.ACTION_VIEW,
@@ -124,7 +137,7 @@ private fun notifyOfAvailableSection(ctx: Context) {
                         addNextIntentWithParentStack(openJournalIntent)
                         getPendingIntent(
                             ongoingNotificationId,
-                            PendingIntent.FLAG_UPDATE_CURRENT.or(PendingIntent.FLAG_MUTABLE)
+                            PendingIntent.FLAG_IMMUTABLE
                         )
                     }
                     n.priority = PRIORITY_DEFAULT
@@ -148,12 +161,7 @@ private fun updateNotification(
     ctx: Context,
     builder: (NotificationCompat.Builder) -> NotificationCompat.Builder,
 ) {
-    val openAppIntent = PendingIntent.getActivity(
-        ctx,
-        0,
-        Intent(ctx, MainActivity::class.java),
-        PendingIntent.FLAG_MUTABLE
-    )
+    val openAppIntent = pendingIntent<MainActivity>(ctx)
     val nb = builder(
         NotificationCompat.Builder(ctx, notificationChannelId)
             .setSmallIcon(R.drawable.ic_running)

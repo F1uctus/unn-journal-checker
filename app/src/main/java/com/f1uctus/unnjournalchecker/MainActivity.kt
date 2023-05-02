@@ -70,6 +70,9 @@ fun App() {
                     FiltersPage(navController)
                 }
             }
+            composable(Routes.Settings.route) {
+                SettingsPage(navController)
+            }
             composable(
                 route = Routes.JournalWebPage.route,
                 deepLinks = listOf(navDeepLink {
@@ -93,6 +96,6 @@ fun App() {
 sealed class Routes(val route: String) {
     object Login : Routes("login")
     object Filters : Routes("filters")
+    object Settings: Routes("settings")
     object JournalWebPage : Routes("JournalWebPage")
 }
-

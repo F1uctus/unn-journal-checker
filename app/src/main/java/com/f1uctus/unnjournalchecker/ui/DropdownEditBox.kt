@@ -19,7 +19,7 @@ fun <K, V> DropdownEditBox(items: Map<K, V>, onSelect: (K, V) -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(10.dp)
-                .clickable(onClick = { expanded = true })
+                .clickable { expanded = true }
         )
         DropdownMenu(
             expanded = expanded,

@@ -72,7 +72,7 @@ suspend fun DataStore<Preferences>.clearFilters() =
 // region Journal check interval
 
 val defaultSectionCheckInterval = Duration.ofMinutes(10)!!
-private val sectionCheckIntervalPrefKey = longPreferencesKey("journalCheckInterval")
+private val sectionCheckIntervalPrefKey = longPreferencesKey("sectionCheckInterval")
 
 val DataStore<Preferences>.sectionCheckInterval: Flow<Duration>
     get() = data

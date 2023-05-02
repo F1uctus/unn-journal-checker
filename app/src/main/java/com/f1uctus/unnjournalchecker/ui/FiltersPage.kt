@@ -21,10 +21,7 @@ import com.f1uctus.unnjournalchecker.ui.filters.FilterBox
 import com.f1uctus.unnjournalchecker.ui.filters.FilterEditBox
 import com.f1uctus.unnjournalchecker.ui.theme.UNNJournalCheckerTheme
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,6 +73,14 @@ fun FiltersPage(
                             .height(50.dp)
                     ) {
                         Icon(Icons.Filled.ExitToApp, "")
+                    }
+                    OutlinedIconButton(
+                        { navController.navigate(Routes.Settings.route) },
+                        Modifier
+                            .weight(1f, true)
+                            .height(50.dp)
+                    ) {
+                        Icon(Icons.Filled.Settings, "")
                     }
                 }
                 filters.forEach {
