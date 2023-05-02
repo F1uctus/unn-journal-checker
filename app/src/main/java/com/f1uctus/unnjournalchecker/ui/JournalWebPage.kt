@@ -3,12 +3,12 @@ package com.f1uctus.unnjournalchecker.ui
 import android.annotation.SuppressLint
 import android.view.ViewGroup
 import android.webkit.*
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
@@ -23,27 +23,34 @@ fun JournalWebPage(
 ) {
     val dataStore = LocalContext.current.dataStore
     val cookie by dataStore.cookie.collectAsState(initial = null)
-    if (cookie == null) return
+    if (cookie == null) {
+        Column(
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            CircularProgressIndicator()
+        }
+        return
+    }
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("journal.unn.ru") },
                 navigationIcon = {
                     if (navController.previousBackStackEntry != null) {
-                        IconButton(onClick = { navController.navigateUp() }) {
+                        IconButton({ navController.navigateUp() }) {
                             Icon(Icons.Filled.ArrowBack, "Back")
                         }
                     }
                 }
 
             )
-        },
-        content = { contentPadding ->
-            Box(modifier = Modifier.padding(contentPadding)) {
-                JournalWebView(url, cookie!!)
-            }
         }
-    )
+    ) { contentPadding ->
+        Box(modifier = Modifier.padding(contentPadding)) {
+            JournalWebView(url, cookie!!)
+        }
+    }
 }
 
 @SuppressLint("SetJavaScriptEnabled")
@@ -66,11 +73,11 @@ fun JournalWebView(
                 )
             )
         }
-    }, update = {
+    }) {
         it.loadUrl(
             url, mapOf(
                 "Cookie" to cookieAuth.toCookieHeaderString()
             )
         )
-    })
+    }
 }
