@@ -70,8 +70,6 @@ class PeriodicEnrollmentCheckReceiver : BroadcastReceiver() {
         Log.i("PeriodicEnrollmentCheckAlarmReceiver", "Completed")
     }
 }
-    }
-}
 
 private fun notifyCheckStarted(ctx: Context) {
     Log.i("notifyCheckStarted", "Started")
