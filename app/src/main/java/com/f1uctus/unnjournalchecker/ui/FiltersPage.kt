@@ -17,7 +17,7 @@ import androidx.navigation.compose.rememberNavController
 import com.f1uctus.unnjournalchecker.*
 import com.f1uctus.unnjournalchecker.R
 import com.f1uctus.unnjournalchecker.common.notificationManager
-import com.f1uctus.unnjournalchecker.ui.filters.FilterBox
+import com.f1uctus.unnjournalchecker.ui.filters.FilterControlBox
 import com.f1uctus.unnjournalchecker.ui.filters.FilterEditBox
 import com.f1uctus.unnjournalchecker.ui.theme.UNNJournalCheckerTheme
 import kotlinx.coroutines.flow.flowOf
@@ -84,7 +84,7 @@ fun FiltersPage(
                     }
                 }
                 filters.forEach {
-                    FilterBox(it, onRefresh = {
+                    FilterControlBox(it, onRefresh = {
                         scope.launch {
                             setEnrollmentCheckAlarm(context)
                         }

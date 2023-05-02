@@ -17,7 +17,7 @@ import com.f1uctus.unnjournalchecker.JournalScraper.FILTER_URL
 import com.f1uctus.unnjournalchecker.common.notificationManager
 import com.f1uctus.unnjournalchecker.ui.*
 import com.f1uctus.unnjournalchecker.ui.theme.UNNJournalCheckerTheme
-import kotlinx.serialization.json.Json
+import kotlinx.coroutines.launch
 
 val Context.dataStore by preferencesDataStore(name = "settings")
 
@@ -50,9 +50,12 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun App() {
     val navController = rememberNavController()
-    val dataStore = LocalContext.current.dataStore
-    val cookie by dataStore.cookie
-        .collectAsState(initial = null)
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val dataStore = context.dataStore
+    val cookie by dataStore.cookie.collectAsState(initial = null)
+    val firstRun by dataStore.firstRun.collectAsState(initial = false)
+
     UNNJournalCheckerTheme {
         NavHost(
             navController = navController,
@@ -88,6 +91,14 @@ fun App() {
                 } else {
                     JournalWebPage(navController, url)
                 }
+            }
+        }
+    }
+
+    if (firstRun) {
+        ExcludeFromPowerSavingDialog {
+            scope.launch {
+                dataStore.setFirstRun(false)
             }
         }
     }

@@ -86,6 +86,22 @@ suspend fun DataStore<Preferences>.setSectionCheckInterval(value: Duration?) =
 
 // endregion ////////////////////
 
+// region First run /////////////
+
+private val firstRunPrefKey = booleanPreferencesKey("firstRun")
+
+val DataStore<Preferences>.firstRun: Flow<Boolean>
+    get() = data
+        .map { it[firstRunPrefKey] }
+        .map { it ?: true }
+
+suspend fun DataStore<Preferences>.setFirstRun(value: Boolean?) =
+    edit {
+        it[firstRunPrefKey] = value ?: true
+    }
+
+// endregion ////////////////////
+
 suspend fun DataStore<Preferences>.clear() =
     edit {
         it.remove(cookiePrefKey)

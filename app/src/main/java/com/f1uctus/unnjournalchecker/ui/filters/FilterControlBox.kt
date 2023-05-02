@@ -15,15 +15,17 @@ import com.f1uctus.unnjournalchecker.ui.theme.UNNJournalCheckerTheme
 import kotlinx.coroutines.flow.filterNotNull
 
 @Composable
-fun FilterBox(
+fun FilterControlBox(
     filter: JournalFilter,
     onRefresh: (JournalFilter) -> Unit,
     onDelete: (JournalFilter) -> Unit,
     demoMenu: JournalMenu? = null
 ) {
     val dataStore = LocalContext.current.dataStore
-    val menu by (demoMenu?.let(::mutableStateOf)?.let { remember { it } })
-        ?: dataStore.menu.filterNotNull().collectAsState(initial = JournalMenu.empty)
+    val menu by demoMenu
+        ?.let(::mutableStateOf)?.let { remember { it } }
+        ?: dataStore.menu.filterNotNull()
+            .collectAsState(initial = JournalMenu.empty)
     Card {
         Column(
             modifier = Modifier.padding(20.dp),
@@ -59,7 +61,7 @@ fun FilterBox(
 @Composable
 fun FilterBoxPreview() {
     UNNJournalCheckerTheme {
-        FilterBox(
+        FilterControlBox(
             filter = JournalFilter(1, 1, 1),
             onRefresh = {},
             onDelete = {},

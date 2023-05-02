@@ -32,6 +32,23 @@ fun unitCase(n: Int, vararg titles: String): String =
     unitCase(n.toLong(), *titles)
 
 @Composable
+fun Section(
+    text: String? = null,
+    content: @Composable (ColumnScope.() -> Unit)
+) {
+    ElevatedCard {
+        Column(
+            Modifier.padding(15.dp),
+            verticalArrangement = Arrangement
+                .spacedBy(10.dp, alignment = Alignment.Top),
+        ) {
+            if (text != null) Text(text)
+            content()
+        }
+    }
+}
+
+@Composable
 fun SettingsPage(navController: NavHostController) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -54,60 +71,70 @@ fun SettingsPage(navController: NavHostController) {
         true
     )
 
+    var excludeFromPowerSavingDialogIsOpen by remember { mutableStateOf(false) }
+
     Surface(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surface)
     ) {
         Column(
-            modifier = Modifier.padding(20.dp),
+            modifier = Modifier.padding(10.dp),
             verticalArrangement = Arrangement
-                .spacedBy(20.dp, alignment = Alignment.Top),
+                .spacedBy(15.dp, alignment = Alignment.Top),
             horizontalAlignment = Alignment.Start,
         ) {
-            Row {
-                Text(
-                    "Проверка секций",
-                    modifier = Modifier
-                        .padding(horizontal = 10.dp)
-                        .weight(1f),
-                )
-            }
-            ElevatedCard(
-                Modifier
-                    .fillMaxWidth()
-                    .clickable { timePickerDialog.show() }
-            ) {
-                Row {
-                    Text(
-                        "Каждые",
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier
-                            .padding(10.dp)
-                            .align(Alignment.CenterVertically)
-                            .weight(2f),
-                    )
-                    Box(
-                        Modifier
-                            .background(MaterialTheme.colorScheme.secondaryContainer)
-                            .weight(1f)
-                    ) {
+            Section("Параметры проверки секций") {
+                OutlinedCard(
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable { timePickerDialog.show() }
+                ) {
+                    Row {
                         Text(
-                            unitCase(
-                                sectionCheckInterval.toMinutes(),
-                                "минуту",
-                                "минуты",
-                                "минут"
-                            ),
-                            textAlign = TextAlign.Center,
+                            "Каждые",
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                             modifier = Modifier
                                 .padding(10.dp)
-                                .fillMaxWidth()
+                                .align(Alignment.CenterVertically)
+                                .weight(2f),
                         )
+                        Box(
+                            Modifier
+                                .background(MaterialTheme.colorScheme.secondaryContainer)
+                                .weight(1f)
+                        ) {
+                            Text(
+                                unitCase(
+                                    sectionCheckInterval.toMinutes(),
+                                    "минуту",
+                                    "минуты",
+                                    "минут"
+                                ),
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier
+                                    .padding(10.dp)
+                                    .fillMaxWidth()
+                            )
+                        }
                     }
                 }
             }
+            Section("Прочее") {
+                OutlinedButton(
+                    { excludeFromPowerSavingDialogIsOpen = true },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("Разрешить работу в фоновом режиме")
+                }
+            }
+        }
+    }
+
+    if (excludeFromPowerSavingDialogIsOpen) {
+        ExcludeFromPowerSavingDialog {
+            excludeFromPowerSavingDialogIsOpen = false
         }
     }
 }
