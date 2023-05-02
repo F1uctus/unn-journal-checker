@@ -2,8 +2,7 @@ package com.f1uctus.unnjournalchecker.ui.filters
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -17,6 +16,7 @@ import kotlinx.coroutines.flow.filterNotNull
 @Composable
 fun FilterControlBox(
     filter: JournalFilter,
+    onPause: (JournalFilter) -> Unit,
     onRefresh: (JournalFilter) -> Unit,
     onDelete: (JournalFilter) -> Unit,
     demoMenu: JournalMenu? = null
@@ -52,6 +52,15 @@ fun FilterControlBox(
                 ElevatedButton({ onRefresh(filter) }) {
                     Icon(Icons.Filled.Refresh, "")
                 }
+                ElevatedButton({ onPause(filter) }) {
+                    Icon(
+                        if (filter.paused)
+                            Icons.Filled.PlayArrow
+                        else
+                            Icons.Filled.Pause,
+                        ""
+                    )
+                }
             }
         }
     }
@@ -63,6 +72,7 @@ fun FilterBoxPreview() {
     UNNJournalCheckerTheme {
         FilterControlBox(
             filter = JournalFilter(1, 1, 1),
+            onPause = {},
             onRefresh = {},
             onDelete = {},
             demoMenu = JournalMenu(

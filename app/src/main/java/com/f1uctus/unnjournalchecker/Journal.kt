@@ -33,6 +33,7 @@ data class JournalFilter(
     val section: Int?,
     val lector: Int?,
     val building: Int?,
+    val paused: Boolean = false
 ) {
     val isEmpty: Boolean
         get() = (section ?: 0) + (lector ?: 0) + (building ?: 0) == 0

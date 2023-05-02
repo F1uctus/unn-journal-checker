@@ -114,6 +114,8 @@ private fun notifyOfAvailableSection(ctx: Context) {
     val lastMonth = checkDate.monthValue + 2
     while (checkDate.monthValue <= lastMonth) {
         for (f in filters) {
+            if (f.paused) continue
+
             val secName = menu.section(f) ?: "<N/A>"
             val sections = JournalScraper.extractSections(checkDate, f, cookie)
             for (sec in sections) {

@@ -58,6 +58,13 @@ suspend fun DataStore<Preferences>.addFilter(f: JournalFilter) =
         it[filtersPrefKey] = it[filtersPrefKey]?.plus(x) ?: x
     }
 
+suspend fun DataStore<Preferences>.updateFilter(old: JournalFilter, new: JournalFilter) =
+    edit {
+        val oldJson = setOf(Json.encodeToString(old))
+        val newJson = setOf(Json.encodeToString(new))
+        it[filtersPrefKey] = it[filtersPrefKey]?.minus(oldJson)?.plus(newJson) ?: newJson
+    }
+
 suspend fun DataStore<Preferences>.removeFilter(f: JournalFilter) =
     edit {
         val x = setOf(Json.encodeToString(f))

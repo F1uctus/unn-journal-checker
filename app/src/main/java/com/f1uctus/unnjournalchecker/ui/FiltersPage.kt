@@ -84,7 +84,14 @@ fun FiltersPage(
                     }
                 }
                 filters.forEach {
-                    FilterControlBox(it, onRefresh = {
+                    FilterControlBox(it, onPause = {
+                        scope.launch {
+                            dataStore.updateFilter(
+                                it,
+                                it.copy(paused = !it.paused)
+                            )
+                        }
+                    }, onRefresh = {
                         scope.launch {
                             setEnrollmentCheckAlarm(context)
                         }
